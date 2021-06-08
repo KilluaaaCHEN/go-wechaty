@@ -58,6 +58,7 @@ func SearchMzitu(kw string) []string {
 			return
 		})
 	}
+	result = SliceUnique(result)
 	return result
 }
 
