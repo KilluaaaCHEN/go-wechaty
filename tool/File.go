@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -33,31 +32,25 @@ func getFileName(url string, dirName string) string {
 	return dirName + "/" + urlList[len(urlList)-1]
 }
 
-func SaveFile(url string, dirName string, header map[string]string, delay int, wg *sync.WaitGroup) {
-	defer wg.Done()
+func SaveFile(url string, dirName string, header map[string]string, delay int) string {
 	filename := getFileName(url, dirName)
 	if Exist(filename) {
-		existsCount++
-		printLog()
-		return
+		return ""
 	}
 	resp, err := Get(url, header)
 	if err != nil {
-		return
+		return ""
 	}
 	defer resp.Body.Close()
 	pix, _ := ioutil.ReadAll(resp.Body)
 	if err := ioutil.WriteFile(filename, pix, 0777); err != nil {
 		fmt.Println(err)
-		errorCount++
-		printLog()
-		return
+		return ""
 	}
-	successCount++
 	if delay > 0 {
 		time.Sleep(time.Millisecond * time.Duration(delay))
 	}
-	printLog()
+	return filename
 }
 
 func printLog() {

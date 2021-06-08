@@ -21,7 +21,7 @@ var redisClient *redis.Client
 
 const (
 	token     = "puppet_paimon_c9b8e6dfe1d7e2d7d652a126b1f901f1"
-	redisHost = "172.20.0.1"
+	redisHost = "127.0.0.1"
 	redisPort = 6379
 	redisPwd  = "admin888"
 )
@@ -105,7 +105,7 @@ func xiaoLangHandleMessage(from _interface.IContact, room _interface.IRoom, kw s
 		return
 	}
 	imgs := tool.SearchMzitu(kw)
-	if imgs == nil {
+	if imgs == "" {
 		rst := tuLing(kw)
 		if rst == "" {
 			room.Say("机器人短路了", bot.Contact().Load(from.ID()))
@@ -114,10 +114,13 @@ func xiaoLangHandleMessage(from _interface.IContact, room _interface.IRoom, kw s
 		}
 		return
 	}
-	for _, img := range imgs {
-		fb, _ := file_box.FromUrl(img, "", tool.Header2)
-		room.Say(fb)
-	}
+	fb := file_box.FromFile(imgs, "")
+	msgs, err := room.Say(fb)
+	fmt.Println(msgs, err)
+	//for _, img := range imgs {
+	//fb, _ := file_box.FromUrl(img, "", tool.Header2)
+	//room.Say(fb)
+	//}
 	time.Sleep(time.Millisecond * 200)
 	room.Say(getText(), bot.Contact().Load(from.ID()))
 	return

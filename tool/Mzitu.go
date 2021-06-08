@@ -3,8 +3,10 @@ package tool
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/jung-kurt/gofpdf"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -21,51 +23,52 @@ var Header2 = http.Header{
 	"referer":    []string{"https://www.mzitu.com/page/"},
 }
 
-func SearchMzitu(kw string) []string {
+func SearchMzitu(kw string) string {
 	url = fmt.Sprintf("https://www.mzitu.com/search/%s", kw)
 	resp, err := Get(url, Header)
 	if err != nil {
-		return nil
+		return ""
 	}
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil
+		return ""
 	}
 	list := doc.Find("#pins").Find("span a")
 	if list.Length() == 0 {
-		return nil
+		return ""
 	}
 	index := int(RandInt(0, list.Length()))
-	var result []string
+	var result string
 	list.Each(func(i int, s *goquery.Selection) {
 		if i != index {
 			return
 		}
 		detailUrl, _ := s.Attr("href")
-		result = getDetail(detailUrl)
+		name := s.Text()
+		result = getDetail(detailUrl, name)
 		return
 	})
-	if result == nil {
+	if result == "" {
 		list.Each(func(i int, s *goquery.Selection) {
-			if result != nil {
+			if result != "" {
 				return
 			}
+			name := s.Text()
 			detailUrl, _ := s.Attr("href")
-			result = getDetail(detailUrl)
+			result = getDetail(detailUrl, name)
 			return
 		})
 	}
-	result = SliceUnique(result)
 	return result
 }
 
-func getDetail(url string) []string {
+func getDetail(url, name string) string {
 	resp, err := Get(url, Header)
 	if err != nil {
-		return nil
+		return ""
 	}
 	defer resp.Body.Close()
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
@@ -89,11 +92,28 @@ func getDetail(url string) []string {
 		imgUrl := strings.Replace(firstImg, "01.jpg", fmt.Sprintf("%02d", i)+".jpg", 1)
 		images = append(images, imgUrl)
 	}
+
+	var limit int64 = 10
 	max := totalCount
-	if totalCount >= 10 {
-		max -= 10
+	if totalCount >= int(limit) {
+		max -= int(limit)
 	}
 	index := RandInt(0, max)
-	result := images[index : index+10]
-	return result
+	result := images[index : index+limit]
+	result = SliceUnique(result)
+
+	//写入到PDF
+	dir, _ := os.Getwd()
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	for _, file := range result {
+		fileName := SaveFile(file, dir+"/runtime/images", Header, 0)
+		pdf.AddPage()
+		pdf.Image(fileName, 0, 0, 0, 0, false, "", 0, "")
+	}
+	out := "runtime/pdf/" + name + ".pdf"
+	if err := pdf.OutputFileAndClose(out); err != nil {
+		fmt.Println(err)
+		return ""
+	}
+	return out
 }
