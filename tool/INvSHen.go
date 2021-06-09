@@ -34,7 +34,6 @@ func SearchNvShen(kw string) []string {
 		return nil
 	}
 	list := doc.Find(".tag_div li a")
-	//var result []string
 	listUrl := ""
 	list.Each(func(i int, s *goquery.Selection) {
 		href, _ := s.Attr("href")
