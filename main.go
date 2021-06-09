@@ -124,7 +124,7 @@ func xiaoLangHandleMessage(from _interface.IContact, room _interface.IRoom, kw s
 	}
 	//妹子图
 	imgs2 := tool.SearchMzitu(kw)
-	if imgs2 != nil || len(imgs2) > 1 {
+	if imgs2 != nil && len(imgs2) > 1 {
 		sendFile(from, room, imgs2, tool.MzituHeader)
 		return
 	}
