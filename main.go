@@ -122,16 +122,16 @@ func xiaoLangHandleMessage(from _interface.IContact, room _interface.IRoom, kw s
 		room.Say("说话太快,休息一下吧", bot.Contact().Load(from.ID()))
 		return
 	}
-	//i女神
-	imgs := tool.SearchNvShen(kw)
-	if imgs != nil {
-		sendFile(from, room, imgs, tool.InvShenHeader2)
-		return
-	}
 	//妹子图
 	imgs2 := tool.SearchMzitu(kw)
 	if imgs2 != nil {
 		sendFile(from, room, imgs2, tool.MzituHeader)
+		return
+	}
+	//i女神
+	imgs := tool.SearchNvShen(kw)
+	if imgs != nil {
+		sendFile(from, room, imgs, tool.InvShenHeader2)
 		return
 	}
 	rst := tuLing(kw)
