@@ -13,6 +13,7 @@ import (
 	"github.com/wechaty/go-wechaty/wechaty/user"
 	"go-wechaty/tool"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -21,7 +22,8 @@ var bot *wechaty.Wechaty
 var redisClient *redis.Client
 
 const (
-	redisHost = "172.20.0.1"
+	//redisHost = "172.20.0.1"
+	redisHost = "127.0.0.1"
 	redisPort = 6379
 	redisPwd  = "admin888"
 )
@@ -109,23 +111,34 @@ func xiaoLangHandleMessage(from _interface.IContact, room _interface.IRoom, kw s
 		room.Say("说话太快,休息一下吧", bot.Contact().Load(from.ID()))
 		return
 	}
-	imgs := tool.SearchMzitu(kw)
-	if imgs == nil {
-		rst := tuLing(kw)
-		if rst == "" {
-			room.Say("机器人短路了", bot.Contact().Load(from.ID()))
-		} else {
-			room.Say(rst, bot.Contact().Load(from.ID()))
-		}
+	//i女神
+	imgs := tool.SearchNvShen(kw)
+	if imgs != nil {
+		sendFile(from, room, imgs, tool.InvShenHeader2)
 		return
 	}
+	//妹子图
+	imgs2 := tool.SearchMzitu(kw)
+	if imgs2 != nil {
+		sendFile(from, room, imgs2, tool.MzituHeader)
+		return
+	}
+	rst := tuLing(kw)
+	if rst == "" {
+		room.Say("机器人短路了", bot.Contact().Load(from.ID()))
+	} else {
+		room.Say(rst, bot.Contact().Load(from.ID()))
+	}
+	return
+}
+
+func sendFile(from _interface.IContact, room _interface.IRoom, imgs []string, header http.Header) {
 	for _, img := range imgs {
-		fb, _ := file_box.FromUrl(img, "", tool.Header2)
+		fb, _ := file_box.FromUrl(img, "", header)
 		room.Say(fb)
 	}
 	time.Sleep(time.Millisecond * 200)
 	room.Say(getText(), bot.Contact().Load(from.ID()))
-	return
 }
 
 type TulingRst struct {
