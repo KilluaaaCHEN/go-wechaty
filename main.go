@@ -14,6 +14,7 @@ import (
 	"go-wechaty/tool"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -103,7 +104,8 @@ func onMessage(ctx *wechaty.Context, message *user.Message) {
 }
 
 func showMen(from _interface.IContact, room _interface.IRoom) {
-	fb := file_box.FromFile("./menu.png", "")
+	dir, _ := os.Getwd()
+	fb := file_box.FromFile(dir+"/menu.png", "")
 	room.Say(fb, bot.Contact().Load(from.ID()))
 }
 
