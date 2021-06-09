@@ -22,8 +22,8 @@ var bot *wechaty.Wechaty
 var redisClient *redis.Client
 
 const (
-	//redisHost = "172.20.0.1"
-	redisHost = "127.0.0.1"
+	redisHost = "172.20.0.1"
+	//redisHost = "127.0.0.1"
 	redisPort = 6379
 	redisPwd  = "admin888"
 )
@@ -93,8 +93,18 @@ func onMessage(ctx *wechaty.Context, message *user.Message) {
 	from := message.From()
 	if strings.Contains(message.Text(), "@小浪") {
 		kw := getKw(message.Text())
-		xiaoLangHandleMessage(from, room, kw)
+		switch kw {
+		case "菜单":
+			showMen(from, room)
+		default:
+			xiaoLangHandleMessage(from, room, kw)
+		}
 	}
+}
+
+func showMen(from _interface.IContact, room _interface.IRoom) {
+	fb := file_box.FromFile("./menu.png", "")
+	room.Say(fb, bot.Contact().Load(from.ID()))
 }
 
 /**
