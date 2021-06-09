@@ -12,6 +12,7 @@ import (
 	"github.com/wechaty/go-wechaty/wechaty/interface"
 	"github.com/wechaty/go-wechaty/wechaty/user"
 	"go-wechaty/tool"
+	"log"
 	"strings"
 	"time"
 )
@@ -20,7 +21,6 @@ var bot *wechaty.Wechaty
 var redisClient *redis.Client
 
 const (
-	token     = "puppet_paimon_c9b8e6dfe1d7e2d7d652a126b1f901f1"
 	redisHost = "172.20.0.1"
 	redisPort = 6379
 	redisPwd  = "admin888"
@@ -30,6 +30,11 @@ func main() {
 	initRedisCli()
 	initTime()
 
+	token, err := redisClient.Get(context.TODO(), "wechaty:token").Result()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	bot = wechaty.NewWechaty(wechaty.WithPuppetOption(wp.Option{Token: token}))
 	bot.OnScan(func(ctx *wechaty.Context, qrCode string, status schemas.ScanStatus, data string) {
 		fmt.Printf("Scan QR Code to login: %v\nhttps://wechaty.github.io/qrcode/%s\n", status, qrCode)
@@ -37,7 +42,7 @@ func main() {
 		fmt.Printf("User %s logined\n", user.Name())
 	}).OnMessage(onMessage)
 
-	var err = bot.Start()
+	err = bot.Start()
 	if err != nil {
 		panic(err)
 	}
