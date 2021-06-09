@@ -145,11 +145,18 @@ func xiaoLangHandleMessage(from _interface.IContact, room _interface.IRoom, kw s
 
 func sendFile(from _interface.IContact, room _interface.IRoom, imgs []string, header http.Header) {
 	for _, img := range imgs {
-		fb, _ := file_box.FromUrl(img, "", header)
-		room.Say(fb)
+		go doSendFile(img, header, room)
 	}
-	time.Sleep(time.Millisecond * 200)
-	room.Say(getText(), bot.Contact().Load(from.ID()))
+	time.Sleep(time.Millisecond * 300)
+	go room.Say(getText(), bot.Contact().Load(from.ID()))
+}
+
+func doSendFile(img string, header http.Header, room _interface.IRoom) {
+	fb, err := file_box.FromUrl(img, "", header)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	room.Say(fb)
 }
 
 type TulingRst struct {
