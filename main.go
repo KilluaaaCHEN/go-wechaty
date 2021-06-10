@@ -147,7 +147,7 @@ func sendFile(from _interface.IContact, room _interface.IRoom, imgs []string, he
 	for _, img := range imgs {
 		go doSendFile(img, header, room)
 	}
-	time.Sleep(time.Millisecond * 300)
+	time.Sleep(time.Millisecond * 500)
 	go room.Say(getText(), bot.Contact().Load(from.ID()))
 }
 
