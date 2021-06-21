@@ -22,7 +22,7 @@ var bot *wechaty.Wechaty
 var redisClient *redis.Client
 
 const (
-	redisHost = "172.20.0.1"
+	redisHost = "172.18.0.1"
 	//redisHost = "127.0.0.1"
 	redisPort = 6379
 	redisPwd  = "admin888"
