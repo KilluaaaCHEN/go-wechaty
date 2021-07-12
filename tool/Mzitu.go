@@ -21,30 +21,31 @@ var MzituHeader = http.Header{
 	"referer":    []string{"https://www.mzitu.com/page/"},
 }
 
-func SearchMzitu(kw string) []string {
+func SearchMzitu(kw string) ([]string, string) {
 	url = fmt.Sprintf("https://www.mzitu.com/search/%s", kw)
 	resp, err := Get(url, Header)
 	if err != nil {
-		return nil
+		return nil, ""
 	}
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil
+		return nil, ""
 	}
 	list := doc.Find("#pins").Find("span a")
 	if list.Length() == 0 {
-		return nil
+		return nil, ""
 	}
 	index := int(RandInt(0, list.Length()))
 	var result []string
+	var detailUrl string
 	list.Each(func(i int, s *goquery.Selection) {
 		if i != index {
 			return
 		}
-		detailUrl, _ := s.Attr("href")
+		detailUrl, _ = s.Attr("href")
 		result = getDetail(detailUrl)
 		return
 	})
@@ -59,7 +60,7 @@ func SearchMzitu(kw string) []string {
 		})
 	}
 	result = SliceUnique(result)
-	return result
+	return result, detailUrl
 }
 
 func getDetail(url string) []string {

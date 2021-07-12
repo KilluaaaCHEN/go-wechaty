@@ -123,15 +123,15 @@ func xiaoLangHandleMessage(from _interface.IContact, room _interface.IRoom, kw s
 		return
 	}
 	//妹子图
-	imgs2 := tool.SearchMzitu(kw)
+	imgs2, url := tool.SearchMzitu(kw)
 	if imgs2 != nil && len(imgs2) > 1 {
-		sendFile(from, room, imgs2, tool.MzituHeader)
+		sendFile(from, room, imgs2, url, tool.MzituHeader)
 		return
 	}
 	//i女神
-	imgs := tool.SearchNvShen(kw)
+	imgs, url := tool.SearchNvShen(kw)
 	if imgs != nil {
-		sendFile(from, room, imgs, tool.InvShenHeader2)
+		sendFile(from, room, imgs, url, tool.InvShenHeader2)
 		return
 	}
 	rst := tuLing(kw)
@@ -143,12 +143,12 @@ func xiaoLangHandleMessage(from _interface.IContact, room _interface.IRoom, kw s
 	return
 }
 
-func sendFile(from _interface.IContact, room _interface.IRoom, imgs []string, header http.Header) {
+func sendFile(from _interface.IContact, room _interface.IRoom, imgs []string, url string, header http.Header) {
 	for _, img := range imgs {
 		go doSendFile(img, header, room)
 	}
 	time.Sleep(time.Millisecond * 500)
-	go room.Say(getText(), bot.Contact().Load(from.ID()))
+	go room.Say(getText()+"\n"+url, bot.Contact().Load(from.ID()))
 }
 
 func doSendFile(img string, header http.Header, room _interface.IRoom) {

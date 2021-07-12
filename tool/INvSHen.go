@@ -21,17 +21,17 @@ var InvShenHeader2 = http.Header{
 	"sec-ch-ua-mobile": []string{"?0"},
 }
 
-func SearchNvShen(kw string) []string {
+func SearchNvShen(kw string) ([]string, string) {
 	url := NvShenDomain + "/gallery/"
 	resp, err := Get(url, InvShenHeader)
 	if err != nil {
-		return nil
+		return nil, ""
 	}
 	defer resp.Body.Close()
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil
+		return nil, ""
 	}
 	list := doc.Find(".tag_div li a")
 	listUrl := ""
@@ -44,21 +44,21 @@ func SearchNvShen(kw string) []string {
 		return
 	})
 	if listUrl == "" {
-		return nil
+		return nil, ""
 	}
 	return filterList(listUrl)
 }
 
-func filterList(url string) []string {
+func filterList(url string) ([]string, string) {
 	resp, err := Get(url, InvShenHeader)
 	if err != nil {
-		return nil
+		return nil, ""
 	}
 	defer resp.Body.Close()
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil
+		return nil, ""
 	}
 	list := doc.Find(".galleryli_link img")
 	var firstImg string
@@ -87,7 +87,7 @@ func filterList(url string) []string {
 	}
 	randIndex := RandInt(0, max)
 	result := images[randIndex : randIndex+10]
-	return result
+	return result, detailUrl
 }
 
 func getTotalCount(url string) int {
