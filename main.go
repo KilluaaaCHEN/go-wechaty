@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -103,16 +104,42 @@ func onMessage(ctx *wechaty.Context, message *user.Message) {
 	from := message.From()
 	if strings.Contains(message.Text(), "@小浪") {
 		kw := getKw(message.Text())
+		if handleSystem(ctx, message, room, from, kw) {
+			return
+		}
 		switch kw {
 		case "菜单":
-			showMen(from, room)
+			showMenu(from, room)
 		default:
 			xiaoLangHandleMessage(from, room, kw)
 		}
 	}
 }
 
-func showMen(from _interface.IContact, room _interface.IRoom) {
+func handleSystem(ctx *wechaty.Context, message *user.Message, room _interface.IRoom, from _interface.IContact, kw string) bool {
+	if message.ID() != "choose_zhou" {
+		return false
+	}
+	switch kw {
+	case "restart":
+		room.Say("start restart ...", bot.Contact().Load(from.ID()))
+		err := command("sh /www/wwwroot/go-wechaty/update.sh")
+		if err != nil {
+			room.Say("restart failure: "+err.Error(), bot.Contact().Load(from.ID()))
+			return true
+		}
+	}
+	return true
+}
+
+func command(cmd string) error {
+	c := exec.Command("bash", "-c", cmd)
+	output, err := c.CombinedOutput()
+	fmt.Println(string(output))
+	return err
+}
+
+func showMenu(from _interface.IContact, room _interface.IRoom) {
 	url := "https://images.gitee.com/uploads/images/2021/0609/164925_d163127f_872969.png"
 	fb, _ := filebox.FromUrl(url, "", nil)
 	room.Say(fb, bot.Contact().Load(from.ID()))
