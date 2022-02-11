@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/wechaty/go-wechaty/wechaty"
 	wp "github.com/wechaty/go-wechaty/wechaty-puppet"
@@ -27,6 +28,7 @@ var redisClient *redis.Client
 const (
 	redisHostLocal = "127.0.0.1"
 	redisHostProd  = "172.17.0.1"
+	masterID       = "choose_zhou"
 	prodHostName   = "iZ8vb28ugr0yzk523x9bskZ"
 	redisPort      = 6379
 	redisPwd       = "admin888"
@@ -35,7 +37,18 @@ const (
 func main() {
 	initRedisCli()
 	initTime()
+	initGin()
 	initBot()
+}
+
+func initGin() {
+	r := gin.Default()
+	r.GET("/say/:text", func(c *gin.Context) {
+		text := c.Param("text")
+		bot.Contact().Load(masterID).Say(text)
+		c.String(http.StatusOK, "OK")
+	})
+	r.Run(":8888")
 }
 
 func initBot() {
@@ -113,7 +126,7 @@ func onMessage(ctx *wechaty.Context, message *user.Message) {
 }
 
 func handleSystem(ctx *wechaty.Context, message *user.Message, room _interface.IRoom, from _interface.IContact, text string) bool {
-	if from.ID() != "choose_zhou" {
+	if from.ID() != masterID {
 		return false
 	}
 	cmdStr := getCommand(text)
