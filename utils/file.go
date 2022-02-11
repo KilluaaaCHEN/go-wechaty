@@ -1,4 +1,4 @@
-package tool
+package utils
 
 import (
 	"fmt"
@@ -64,12 +64,6 @@ func printLog() {
 	fmt.Printf("Successed:%v, Existed:%v, Failure:%v\r", successCount, existsCount, errorCount)
 }
 
-/**
-  @name:获取随机数
-  @author: chenzhou
-  @date: 2020/11/3
-  @node: 含最小值,不含最大值
-*/
 func RandInt(min int, max int) int64 {
 	rand.Seed(time.Now().UnixNano())
 	return int64(rand.Intn(max-min) + min)

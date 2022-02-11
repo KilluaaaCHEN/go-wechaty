@@ -1,4 +1,4 @@
-package tool
+package utils
 
 import (
 	"bytes"
@@ -52,20 +52,10 @@ const (
 	methodPost      = "POST"
 )
 
-/**
-  @name: 发送Post请求,Json格式
-  @author: chenzhou
-  @date: 2021/1/7
-*/
 func PostJson(url string, params interface{}, headers map[string]interface{}) (string, int, error) {
 	return Request(url, params, headers, methodPost, contentTypeJson)
 }
 
-/**
-  @name: 发送Post请求
-  @author: chenzhou
-  @date: 2021/1/7
-*/
 func Request(url string, params interface{}, headers map[string]interface{}, method string, contentType string) (string, int, error) {
 	client := &http.Client{
 		Timeout: time.Second * 5,
@@ -87,11 +77,6 @@ func Request(url string, params interface{}, headers map[string]interface{}, met
 	return string(body), resp.StatusCode, nil
 }
 
-/**
-  @name: 获取请求参数的Reader对象
-  @author: chenzhou
-  @date: 2020/12/11
-*/
 func getReader(params interface{}, contentType string) io.Reader {
 	switch vv := params.(type) {
 	case string:
@@ -115,11 +100,6 @@ func getReader(params interface{}, contentType string) io.Reader {
 	return nil
 }
 
-/**
-  @name: 设置请求头
-  @author: chenzhou
-  @date: 2020/12/11
-*/
 func setHeader(req *http.Request, headers map[string]interface{}, contentType string) {
 	if headers == nil {
 		headers = map[string]interface{}{}

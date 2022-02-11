@@ -4,35 +4,45 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/wechaty/go-wechaty/wechaty"
 	wp "github.com/wechaty/go-wechaty/wechaty-puppet"
-	file_box "github.com/wechaty/go-wechaty/wechaty-puppet/file-box"
+	filebox "github.com/wechaty/go-wechaty/wechaty-puppet/file-box"
 	"github.com/wechaty/go-wechaty/wechaty-puppet/schemas"
 	"github.com/wechaty/go-wechaty/wechaty/interface"
 	"github.com/wechaty/go-wechaty/wechaty/user"
-	"go-wechaty/tool"
-	"log"
-	"net/http"
-	"strings"
-	"time"
+
+	"go-wechaty/utils"
 )
 
 var bot *wechaty.Wechaty
 var redisClient *redis.Client
 
 const (
-	redisHost = "172.18.0.1"
-	//redisHost = "127.0.0.1"
-	redisPort = 6379
-	redisPwd  = "admin888"
+	redisHostLocal = "127.0.0.1"
+	redisHostProd  = "172.17.0.1"
+	prodHostName   = "iZ8vb28ugr0yzk523x9bskZ"
+	redisPort      = 6379
+	redisPwd       = "admin888"
 )
 
 func main() {
 	initRedisCli()
 	initTime()
+	initBot()
+}
 
+func initBot() {
 	token, err := redisClient.Get(context.TODO(), "wechaty:token").Result()
+	if err == redis.Nil {
+		log.Fatal("请先配置wechaty:token")
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,27 +56,31 @@ func main() {
 
 	err = bot.Start()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	select {}
 }
 
 func initTime() {
-	var cstZone = time.FixedZone("CST", 8*3600) //东八
+	var cstZone = time.FixedZone("CST", 8*3600) // 东八
 	time.Local = cstZone
 }
 
 func initRedisCli() {
+	name, err := os.Hostname()
+	if err != nil {
+		log.Fatal(err)
+	}
+	host := redisHostLocal
+	if name == prodHostName {
+		host = redisHostProd
+	}
 	redisClient = redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", redisHost, redisPort),
+		Addr:     fmt.Sprintf("%s:%d", host, redisPort),
 		Password: redisPwd,
 	})
 }
 
-/**
-  @name: 获取查询关键词
-  @date: 2021/6/7
-*/
 func getKw(text string) string {
 	kw := strings.Trim(strings.TrimPrefix(text, "@小浪"), " ")
 	kw = strings.ReplaceAll(kw, " ", "")
@@ -74,10 +88,6 @@ func getKw(text string) string {
 	return kw
 }
 
-/**
-  @name: 收到消息事件
-  @date: 2021/6/7
-*/
 func onMessage(ctx *wechaty.Context, message *user.Message) {
 	room := message.Room()
 	if room == nil {
@@ -104,14 +114,10 @@ func onMessage(ctx *wechaty.Context, message *user.Message) {
 
 func showMen(from _interface.IContact, room _interface.IRoom) {
 	url := "https://images.gitee.com/uploads/images/2021/0609/164925_d163127f_872969.png"
-	fb, _ := file_box.FromUrl(url, "", nil)
+	fb, _ := filebox.FromUrl(url, "", nil)
 	room.Say(fb, bot.Contact().Load(from.ID()))
 }
 
-/**
-  @name: 小浪处理消息
-  @date: 2021/6/7
-*/
 func xiaoLangHandleMessage(from _interface.IContact, room _interface.IRoom, kw string) {
 	ok, err := redisClient.SetNX(context.TODO(), "go-wechaty:lock:"+from.ID(), 1, time.Second*3).Result()
 	if err != nil {
@@ -122,16 +128,16 @@ func xiaoLangHandleMessage(from _interface.IContact, room _interface.IRoom, kw s
 		room.Say("说话太快,休息一下吧", bot.Contact().Load(from.ID()))
 		return
 	}
-	//妹子图
+	/*// 妹子图
 	imgs2, url := tool.SearchMzitu(kw)
 	if imgs2 != nil && len(imgs2) > 1 {
 		sendFile(from, room, imgs2, url, tool.MzituHeader)
 		return
-	}
-	//i女神
-	imgs, url := tool.SearchNvShen(kw)
+	}*/
+	// i女神
+	imgs, url := utils.SearchNvShen(kw)
 	if imgs != nil {
-		sendFile(from, room, imgs, url, tool.InvShenHeader2)
+		sendFile(from, room, imgs, url, utils.InvShenHeader2)
 		return
 	}
 	rst := tuLing(kw)
@@ -148,11 +154,11 @@ func sendFile(from _interface.IContact, room _interface.IRoom, imgs []string, ur
 		go doSendFile(img, header, room)
 	}
 	time.Sleep(time.Millisecond * 500)
-	go room.Say(getText()+"\n"+url, bot.Contact().Load(from.ID()))
+	go room.Say(getText(), bot.Contact().Load(from.ID()))
 }
 
 func doSendFile(img string, header http.Header, room _interface.IRoom) {
-	fb, err := file_box.FromUrl(img, "", header)
+	fb, err := filebox.FromUrl(img, "", header)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -172,10 +178,6 @@ type TulingRst struct {
 	} `json:"results"`
 }
 
-/**
-  @name: 图灵AI
-  @date: 2021/6/7
-*/
 func tuLing(kw string) string {
 	url := "http://openapi.tuling123.com/openapi/api/v2"
 	date := time.Now().Format("20060102")
@@ -186,9 +188,9 @@ func tuLing(kw string) string {
 		return err.Error()
 	}
 	if len(keys) == 0 {
-		return "机器人的APIKey次数都已达上限"
+		return "APIKey次数都已达上限"
 	}
-	i := tool.RandInt(0, len(keys))
+	i := utils.RandInt(0, len(keys))
 	Req := map[string]interface{}{
 		"reqType": 0,
 		"perception": map[string]interface{}{
@@ -201,7 +203,7 @@ func tuLing(kw string) string {
 			"userId": "wechat",
 		},
 	}
-	resp, code, err := tool.PostJson(url, Req, nil)
+	resp, code, err := utils.PostJson(url, Req, nil)
 	if err != nil {
 		return err.Error()
 	}
@@ -223,10 +225,6 @@ func tuLing(kw string) string {
 	return ""
 }
 
-/**
-  @name: 获取正能量文案
-  @date: 2021/6/7
-*/
 func getText() string {
 	list := []string{
 		"五星红旗迎风扬，党是心中红太阳，长夜漫漫党领航，太平盛世好榜样，科技振兴国民强，如今人人有梦想。七一建党节，愿伟大的祖国更加灿烂辉煌!",
@@ -445,5 +443,5 @@ func getText() string {
 		"七月党旗飘啊飘，画着斧头和镰刀。斧头劈开金银山，镰刀收获宝。压力烦恼一扫倒，吓得霉运溜溜跑。七一，愿你事业步步高。",
 		"七月红旗迎风扬，党的生日到身旁。赤日炎炎光芒亮，党的恩情满心房。各族儿女齐欢畅，党的功绩万古芳。铭记党永不忘，沐浴党辉幸福长。建党节到了，愿党永远年轻。",
 	}
-	return list[tool.RandInt(0, len(list))]
+	return list[utils.RandInt(0, len(list))]
 }

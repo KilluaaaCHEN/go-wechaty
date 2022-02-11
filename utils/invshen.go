@@ -1,11 +1,12 @@
-package tool
+package utils
 
 import (
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 const NvShenDomain = "https://www.invshen.net"

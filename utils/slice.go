@@ -1,4 +1,4 @@
-package tool
+package utils
 
 func SliceUnique(slice []string) (uniqueslice []string) {
 	for _, v := range slice {
