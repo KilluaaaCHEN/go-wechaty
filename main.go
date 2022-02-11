@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -101,7 +100,7 @@ func onMessage(ctx *wechaty.Context, message *user.Message) {
 	from := message.From()
 	if strings.Contains(message.Text(), "@小浪") {
 		kw := getKw(message.Text())
-		if handleSystem(ctx, message, room, from, kw) {
+		if handleSystem(ctx, message, room, from, message.Text()) {
 			return
 		}
 		switch kw {
@@ -113,27 +112,34 @@ func onMessage(ctx *wechaty.Context, message *user.Message) {
 	}
 }
 
-func handleSystem(ctx *wechaty.Context, message *user.Message, room _interface.IRoom, from _interface.IContact, kw string) bool {
-	if message.ID() != "choose_zhou" {
+func handleSystem(ctx *wechaty.Context, message *user.Message, room _interface.IRoom, from _interface.IContact, text string) bool {
+	if from.ID() != "choose_zhou" {
 		return false
 	}
-	switch kw {
-	case "restart":
-		room.Say("start restart ...", bot.Contact().Load(from.ID()))
-		err := command("sh /www/wwwroot/go-wechaty/update.sh")
-		if err != nil {
-			room.Say("restart failure: "+err.Error(), bot.Contact().Load(from.ID()))
-			return true
+	cmdStr := getCommand(text)
+	cmd := strings.Split(cmdStr, "#")
+	fmt.Println(cmd)
+	switch strings.Trim(cmd[0], " ") {
+	case "redis":
+		cmdStr = strings.Trim(cmd[1], " ")
+		args := strings.Split(cmdStr, " ")
+		var finalArg = make([]interface{}, 0)
+		for _, arg := range args {
+			if arg == "" {
+				continue
+			}
+			finalArg = append(finalArg, arg)
 		}
+		rst := redisClient.Do(context.TODO(), finalArg...).String()
+		room.Say(rst, bot.Contact().Load(from.ID()))
 	}
 	return true
 }
 
-func command(cmd string) error {
-	c := exec.Command("bash", "-c", cmd)
-	output, err := c.CombinedOutput()
-	fmt.Println(string(output))
-	return err
+func getCommand(text string) string {
+	kw := strings.Trim(strings.TrimPrefix(text, "@小浪"), " ")
+	kw = strings.ReplaceAll(kw, " ", "")
+	return kw
 }
 
 func showMenu(from _interface.IContact, room _interface.IRoom) {
