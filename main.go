@@ -132,8 +132,9 @@ func handleSystem(ctx *wechaty.Context, message *user.Message, room _interface.I
 		}
 		rst := redisClient.Do(context.TODO(), finalArg...).String()
 		room.Say(rst, bot.Contact().Load(from.ID()))
+		return true
 	}
-	return true
+	return false
 }
 
 func getCommand(text string) string {
