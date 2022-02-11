@@ -68,10 +68,7 @@ func initTime() {
 }
 
 func initRedisCli() {
-	name, err := os.Hostname()
-	if err != nil {
-		log.Fatal(err)
-	}
+	name := os.Getenv("HOSTNAME")
 	host := redisHostLocal
 	if name == prodHostName {
 		host = redisHostProd
