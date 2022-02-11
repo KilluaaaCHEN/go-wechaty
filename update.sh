@@ -5,5 +5,5 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./runtime/main ./main.go
 docker build -t "${name}:${version}" -f "./Dockerfile" .
 docker stop ${name}
 docker rm ${name}
-docker run -d -e "HOSTNAME=$(cat /etc/hostname)" --name="${name}" ${name}:${version}
+docker run -d -p 8033:8033 -e "HOSTNAME=$(cat /etc/hostname)" --name="${name}" ${name}:${version}
 docker logs -f ${name}

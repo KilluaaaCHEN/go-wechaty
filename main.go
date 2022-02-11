@@ -37,8 +37,8 @@ const (
 func main() {
 	initRedisCli()
 	initTime()
-	initGin()
 	initBot()
+	initGin()
 }
 
 func initGin() {
@@ -48,7 +48,7 @@ func initGin() {
 		bot.Contact().Load(masterID).Say(text)
 		c.String(http.StatusOK, "OK")
 	})
-	r.Run(":8888")
+	r.Run(":8033")
 }
 
 func initBot() {
@@ -71,7 +71,6 @@ func initBot() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	select {}
 }
 
 func initTime() {
